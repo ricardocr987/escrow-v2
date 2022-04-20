@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Mint, Transfer, CloseAccount};
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("fqj2TjuPyPpW8a3biqpgfCJn2bWqmGGrDws4uvv8LFZ");
 
 #[program]
 pub mod escrow_v2 {
