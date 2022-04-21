@@ -100,7 +100,7 @@ pub mod escrow_v2 {
             authority: ctx.accounts.authority.to_account_info(), // the authority in this instruction is the taker
         };
         let cpi_ctx_to_maker = CpiContext::new(ctx.accounts.token_program.to_account_info(), cpi_accounts_to_maker);
-        token::transfer(cpi_ctx_to_maker, ctx.accounts.escrow.amount_a)?;
+        token::transfer(cpi_ctx_to_maker, ctx.accounts.escrow.amount_b)?;
         // Transfer from vault to taker token account of the tokens owned by the maker
         let cpi_accounts_to_taker = Transfer {
             from: ctx.accounts.vault.to_account_info(),
@@ -108,7 +108,7 @@ pub mod escrow_v2 {
             authority: ctx.accounts.escrow.to_account_info(),
         };
         let cpi_ctx_to_taker = CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), cpi_accounts_to_taker, signer);
-        token::transfer(cpi_ctx_to_taker, ctx.accounts.escrow.amount_a)?;
+        token::transfer(cpi_ctx_to_taker, ctx.accounts.vault.amount)?;
         // Vault account close, as it is a tokenAccount we have to do it via CPI, the escrow account is closed via constraint in the context
         let cpi_accounts_close = CloseAccount {
             account: ctx.accounts.vault.to_account_info(),
@@ -178,7 +178,7 @@ pub struct Cancel<'info> {
             b"escrow",
             escrow.amount_a.to_le_bytes().as_ref(),
             escrow.amount_b.to_le_bytes().as_ref(),
-            authority.key().as_ref()
+            escrow.authority.key().as_ref()
         ],
         bump = escrow.escrow_bump,
         close = authority,
@@ -213,18 +213,20 @@ pub struct Exchange<'info> {
             b"escrow",
             escrow.amount_a.to_le_bytes().as_ref(),
             escrow.amount_b.to_le_bytes().as_ref(),
-            authority.key().as_ref()
+            escrow.authority.key().as_ref()
         ],
         bump = escrow.escrow_bump,
+        constraint = escrow.authority == *maker.key,
         close = maker,
     )]
     pub escrow: Account<'info, Escrow>,
     #[account(
+        mut,
         seeds = [
             b"vault",
             escrow.key().as_ref(),
         ],
-        bump
+        bump = escrow.vault_bump,
     )]
     pub vault: Account<'info, TokenAccount>,
     #[account(mut)]
@@ -240,7 +242,7 @@ pub struct Exchange<'info> {
         associated_token::mint = taker_mint,
         associated_token::authority = maker,
     )]
-    pub token_account_maker_b: Account<'info, TokenAccount>,
+    pub token_account_maker_b: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         constraint = escrow.mint_token_maker == token_account_taker_a.mint
@@ -251,7 +253,7 @@ pub struct Exchange<'info> {
         constraint = escrow.mint_token_taker == token_account_maker_b.mint
     )]
     pub token_account_taker_b: Account<'info, TokenAccount>,
-    #[account(address = escrow.mint_token_taker)]
+    #[account(constraint = taker_mint.key() == escrow.mint_token_taker)]
     pub taker_mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
 }
