@@ -18,9 +18,10 @@ pub mod escrow_v2 {
         escrow.mint_token_taker = ctx.accounts.mint_token_taker.key();
         escrow.amount_a = amount_a;
         escrow.amount_b = amount_b;
-        escrow.escrow_bump = *ctx.bumps.get("escrow").unwrap();
+        // Bump seeds found during constraint validation. We dont need to pass it via arguments and handlers dont have to recalculate it
+        escrow.escrow_bump = *ctx.bumps.get("escrow").unwrap(); 
         escrow.vault_bump = *ctx.bumps.get("vault").unwrap();
-
+        // Transfer from maker token account to vault via token_program CPI
         let cpi_accounts = Transfer {
             from: ctx.accounts.token_account_maker.to_account_info(),
             to: ctx.accounts.vault.to_account_info(),
@@ -38,17 +39,19 @@ pub mod escrow_v2 {
     pub fn cancel(
         ctx: Context<Cancel>,
     ) -> Result<()> {
+        // As the vault authority is the escrow account we need to define its seeds, can't be another escrow PDA with the same amounts and the same maker
         let amount_a = ctx.accounts.escrow.amount_a.to_le_bytes();
         let amount_b = ctx.accounts.escrow.amount_b.to_le_bytes();
-
+        let authority = ctx.accounts.escrow.authority.key();
         let seeds = &[
             b"escrow",
             amount_a.as_ref(),
             amount_b.as_ref(),
+            authority.as_ref(),
             &[ctx.accounts.escrow.escrow_bump]
         ];
         let signer = &[&seeds[..]];
-
+        // Transfer from vault to maker token account
         let cpi_accounts_tx = Transfer {
             from: ctx.accounts.vault.to_account_info(),
             to: ctx.accounts.token_account_maker.to_account_info(),
@@ -60,7 +63,7 @@ pub mod escrow_v2 {
             signer
         );
         token::transfer(cpi_ctx_tx, ctx.accounts.escrow.amount_a)?;
-
+        // Vault account close, as it is a tokenAccount we have to do it via CPI, the escrow account is closed via constraint in the context
         let cpi_accounts_close = CloseAccount {
             account: ctx.accounts.vault.to_account_info(),
             destination: ctx.accounts.authority.to_account_info(),
@@ -81,22 +84,24 @@ pub mod escrow_v2 {
     ) -> Result<()> {
         let amount_a = ctx.accounts.escrow.amount_a.to_le_bytes();
         let amount_b = ctx.accounts.escrow.amount_b.to_le_bytes();
+        let authority = ctx.accounts.escrow.authority.key();
         let seeds = &[
             b"escrow",
             amount_a.as_ref(),
             amount_b.as_ref(),
+            authority.as_ref(),
             &[ctx.accounts.escrow.escrow_bump]
         ];
         let signer = &[&seeds[..]];
-
+        // Transfer from taker token account to maker token account
         let cpi_accounts_to_maker = Transfer {
             from: ctx.accounts.token_account_taker_b.to_account_info(),
             to: ctx.accounts.token_account_maker_b.to_account_info(),
-            authority: ctx.accounts.authority.to_account_info(),
+            authority: ctx.accounts.authority.to_account_info(), // the authority in this instruction is the taker
         };
-        let cpi_ctx_to_maker = CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), cpi_accounts_to_maker, signer);
+        let cpi_ctx_to_maker = CpiContext::new(ctx.accounts.token_program.to_account_info(), cpi_accounts_to_maker);
         token::transfer(cpi_ctx_to_maker, ctx.accounts.escrow.amount_a)?;
-
+        // Transfer from vault to taker token account of the tokens owned by the maker
         let cpi_accounts_to_taker = Transfer {
             from: ctx.accounts.vault.to_account_info(),
             to: ctx.accounts.token_account_taker_a.to_account_info(),
@@ -104,7 +109,7 @@ pub mod escrow_v2 {
         };
         let cpi_ctx_to_taker = CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), cpi_accounts_to_taker, signer);
         token::transfer(cpi_ctx_to_taker, ctx.accounts.escrow.amount_a)?;
-
+        // Vault account close, as it is a tokenAccount we have to do it via CPI, the escrow account is closed via constraint in the context
         let cpi_accounts_close = CloseAccount {
             account: ctx.accounts.vault.to_account_info(),
             destination: ctx.accounts.maker.to_account_info(),
@@ -131,6 +136,7 @@ pub struct Initialize<'info> {
             b"escrow",
             amount_a.to_le_bytes().as_ref(),
             amount_b.to_le_bytes().as_ref(),
+            authority.key().as_ref()
         ],
         bump,
     )]
@@ -172,6 +178,7 @@ pub struct Cancel<'info> {
             b"escrow",
             escrow.amount_a.to_le_bytes().as_ref(),
             escrow.amount_b.to_le_bytes().as_ref(),
+            authority.key().as_ref()
         ],
         bump = escrow.escrow_bump,
         close = authority,
@@ -206,6 +213,7 @@ pub struct Exchange<'info> {
             b"escrow",
             escrow.amount_a.to_le_bytes().as_ref(),
             escrow.amount_b.to_le_bytes().as_ref(),
+            authority.key().as_ref()
         ],
         bump = escrow.escrow_bump,
         close = maker,
