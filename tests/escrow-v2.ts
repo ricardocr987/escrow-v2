@@ -135,6 +135,23 @@ describe("escrow-v2", () => {
       100,
       (await makerMint.getAccountInfo(vault)).amount.toNumber()
     );
+    let escrowArgs: solita.EscrowArgs = {
+      authority: maker.publicKey,
+      mintTokenMaker: makerMint.publicKey,
+      mintTokenTaker: takerMint.publicKey,
+      amountA: amount_a,
+      amountB: amount_b,
+      escrowBump: escrowBump, 
+      vaultBump: vaultBump,
+    }
+    let expectedEscrow = solita.Escrow.fromArgs(escrowArgs);
+    console.log(expectedEscrow);
+    let actualEscrow = solita.Escrow.deserialize(await (await program.provider.connection.getAccountInfo(escrow)).data)[0];
+    console.log(actualEscrow);
+    /*assert.equal(
+      actualEscrow,
+      expectedEscrow
+    );*/
   });
 
   it("send to vault and cancel", async () => {
