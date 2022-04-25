@@ -73,7 +73,7 @@ export function createExchangeInstruction(
     },
     {
       pubkey: vault,
-      isWritable: false,
+      isWritable: true,
       isSigner: false,
     },
     {

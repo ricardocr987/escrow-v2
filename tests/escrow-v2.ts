@@ -1,10 +1,11 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { EscrowV2 } from "../target/types/escrow_v2";
-import * as solita from "../src/generated"
 import * as spl from "@solana/spl-token";
 import * as assert from "assert";
 import { NodeWallet } from "./utils/nodewallet";
+import * as TS from '../src/generated';
+import { Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 
 describe("escrow-v2", () => {
   const provider = anchor.AnchorProvider.local();
@@ -24,6 +25,36 @@ describe("escrow-v2", () => {
   const maker = anchor.web3.Keypair.generate();
   const taker = anchor.web3.Keypair.generate();
   const hacker = anchor.web3.Keypair.generate();
+
+  async function initilize(initAccounts: TS.InitializeInstructionAccounts, initArgs: TS.InitializeInstructionArgs, signers: anchor.web3.Signer[]){
+    const initializeIx = TS.createInitializeInstruction(initAccounts, initArgs);
+    const initializeTx = new Transaction().add(initializeIx);
+    await sendAndConfirmTransaction(
+      program.provider.connection,
+      initializeTx,
+      signers,
+    );
+  }
+
+  function get_escrow_seeds(amount_a, amount_b) {
+    const seeds =
+      [
+        Buffer.from(anchor.utils.bytes.utf8.encode("escrow")),
+        amount_a.toBuffer("le", 8),
+        amount_b.toBuffer("le", 8),
+        maker.publicKey.toBuffer(),
+      ];
+    return seeds;
+  }
+
+  function get_vault_seeds(escrow) {
+    const seeds =
+      [
+        Buffer.from(anchor.utils.bytes.utf8.encode("vault")), 
+        escrow.toBuffer()
+      ];
+    return seeds;
+  }
 
   before(async () => {
     const wallet = provider.wallet as NodeWallet;
@@ -97,45 +128,39 @@ describe("escrow-v2", () => {
     let amount_b = new anchor.BN(200);
 
     const [escrow, escrowBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [
-        Buffer.from(anchor.utils.bytes.utf8.encode("escrow")),
-        amount_a.toBuffer("le", 8),
-        amount_b.toBuffer("le", 8),
-        maker.publicKey.toBuffer(),
-      ],
+      get_escrow_seeds(amount_a, amount_b),
       program.programId
     );
 
     const [vault, vaultBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(anchor.utils.bytes.utf8.encode("vault")), escrow.toBuffer()],
+      get_vault_seeds(escrow),
       program.programId
     );
 
-    await program.methods
-      .initialize(
-        new anchor.BN(100),
-        new anchor.BN(200),
-      )
-        .accounts({
-          escrow: escrow,
-          vault: vault,
-          authority: maker.publicKey,
-          tokenAccountMaker: makerTokenAccountA,
-          mintTokenMaker: makerMint.publicKey,
-          mintTokenTaker: takerMint.publicKey,
-          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-          tokenProgram: spl.TOKEN_PROGRAM_ID,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-          .signers([maker])
-            .rpc();
-    
-    // Check the escrow has the right amount.
+    const accounts: TS.InitializeInstructionAccounts = {
+      escrow: escrow,
+      vault: vault,
+      authority: maker.publicKey,
+      tokenAccountMaker: makerTokenAccountA,
+      mintTokenMaker: makerMint.publicKey,
+      mintTokenTaker: takerMint.publicKey,
+    }
+    const args: TS.InitializeInstructionArgs = {
+      amountA: amount_a,
+      amountB: amount_b
+    }
+    const signers: anchor.web3.Signer[] = [maker];
+
+    await initilize(accounts, args, signers);
+
+    // Checks vault PDA Account
     assert.equal(
       100,
       (await makerMint.getAccountInfo(vault)).amount.toNumber()
     );
-    let escrowArgs: solita.EscrowArgs = {
+
+    // Checks escrow Account
+    let escrowArgs: TS.EscrowArgs = {
       authority: maker.publicKey,
       mintTokenMaker: makerMint.publicKey,
       mintTokenTaker: takerMint.publicKey,
@@ -144,14 +169,13 @@ describe("escrow-v2", () => {
       escrowBump: escrowBump, 
       vaultBump: vaultBump,
     }
-    let expectedEscrow = solita.Escrow.fromArgs(escrowArgs);
-    console.log(expectedEscrow);
-    let actualEscrow = solita.Escrow.deserialize(await (await program.provider.connection.getAccountInfo(escrow)).data)[0];
-    console.log(actualEscrow);
-    /*assert.equal(
-      actualEscrow,
-      expectedEscrow
-    );*/
+    let expectedEscrow = TS.Escrow.fromArgs(escrowArgs);
+    let actualEscrow = TS.Escrow.deserialize(await (await program.provider.connection.getAccountInfo(escrow)).data)[0];
+    assert.equal(
+      JSON.stringify(actualEscrow),
+      JSON.stringify(expectedEscrow)
+    );
+
   });
 
   it("send to vault and cancel", async () => {
@@ -159,17 +183,12 @@ describe("escrow-v2", () => {
     let amount_b = new anchor.BN(200);
 
     const [escrow, escrowBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [
-        Buffer.from(anchor.utils.bytes.utf8.encode("escrow")),
-        amount_a.toBuffer("le", 8),
-        amount_b.toBuffer("le", 8),
-        maker.publicKey.toBuffer(),
-      ],
+      get_escrow_seeds(amount_a, amount_b),
       program.programId
     );
 
     const [vault, vaultBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(anchor.utils.bytes.utf8.encode("vault")), escrow.toBuffer()],
+      get_vault_seeds(escrow),
       program.programId
     );
 
@@ -258,17 +277,12 @@ describe("escrow-v2", () => {
     let amount_b = new anchor.BN(200);
 
     const [escrow, escrowBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [
-        Buffer.from(anchor.utils.bytes.utf8.encode("escrow")),
-        amount_a.toBuffer("le", 8),
-        amount_b.toBuffer("le", 8),
-        maker.publicKey.toBuffer(),
-      ],
+      get_escrow_seeds(amount_a, amount_b),
       program.programId
     );
 
     const [vault, vaultBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(anchor.utils.bytes.utf8.encode("vault")), escrow.toBuffer()],
+      get_vault_seeds(escrow),
       program.programId
     );
 
@@ -341,17 +355,12 @@ describe("escrow-v2", () => {
     let amount_b = new anchor.BN(200);
 
     const [escrow, escrowBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [
-        Buffer.from(anchor.utils.bytes.utf8.encode("escrow")),
-        amount_a.toBuffer("le", 8),
-        amount_b.toBuffer("le", 8),
-        maker.publicKey.toBuffer(),
-      ],
+      get_escrow_seeds(amount_a, amount_b),
       program.programId
     );
 
     const [vault, vaultBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(anchor.utils.bytes.utf8.encode("vault")), escrow.toBuffer()],
+      get_vault_seeds(escrow),
       program.programId
     );
 
@@ -419,17 +428,12 @@ describe("escrow-v2", () => {
     let amount_b = new anchor.BN(200);
 
     const [escrow, escrowBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [
-        Buffer.from(anchor.utils.bytes.utf8.encode("escrow")),
-        amount_a.toBuffer("le", 8),
-        amount_b.toBuffer("le", 8),
-        maker.publicKey.toBuffer(),
-      ],
+      get_escrow_seeds(amount_a, amount_b),
       program.programId
     );
 
     const [vault, vaultBump] = await anchor.web3.PublicKey.findProgramAddress(
-      [Buffer.from(anchor.utils.bytes.utf8.encode("vault")), escrow.toBuffer()],
+      get_vault_seeds(escrow),
       program.programId
     );
 
