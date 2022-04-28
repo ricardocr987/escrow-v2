@@ -11,7 +11,7 @@ export * from './instructions'
 export const PROGRAM_ADDRESS = 'fqj2TjuPyPpW8a3biqpgfCJn2bWqmGGrDws4uvv8LFZ'
 
 /**
- * Program publick key
+ * Program public key
  *
  * @category constants
  * @category generated

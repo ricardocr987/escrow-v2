@@ -267,4 +267,6 @@ pub struct Escrow {
     pub amount_b: u64,
     pub escrow_bump: u8,
     pub vault_bump: u8,
+    pub vec_u8: Vec<u8>,
+    pub vec_u16: Vec<u16>,
 }

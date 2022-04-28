@@ -152,7 +152,8 @@ describe("escrow-v2", () => {
     const signers: anchor.web3.Signer[] = [maker];
 
     await initilize(accounts, args, signers);
-
+    
+    await (await program.account.escrow.fetch(escrow)).vecU8;
     // Checks vault PDA Account
     assert.equal(
       100,

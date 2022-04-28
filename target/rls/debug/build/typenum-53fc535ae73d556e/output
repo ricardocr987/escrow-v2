@@ -1,0 +1,2 @@
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/ricardocastelloroman/Developer/escrow-v2/target/rls/debug/build/typenum-53fc535ae73d556e/out/consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=/Users/ricardocastelloroman/Developer/escrow-v2/target/rls/debug/build/typenum-53fc535ae73d556e/out/op.rs

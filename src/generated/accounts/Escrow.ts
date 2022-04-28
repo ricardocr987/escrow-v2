@@ -22,6 +22,8 @@ export type EscrowArgs = {
   amountB: beet.bignum
   escrowBump: number
   vaultBump: number
+  vecU8: number[]
+  vecU16: number[]
 }
 
 const escrowDiscriminator = [31, 213, 123, 187, 186, 22, 218, 155]
@@ -40,7 +42,9 @@ export class Escrow implements EscrowArgs {
     readonly amountA: beet.bignum,
     readonly amountB: beet.bignum,
     readonly escrowBump: number,
-    readonly vaultBump: number
+    readonly vaultBump: number,
+    readonly vecU8: number[],
+    readonly vecU16: number[]
   ) {}
 
   /**
@@ -54,7 +58,9 @@ export class Escrow implements EscrowArgs {
       args.amountA,
       args.amountB,
       args.escrowBump,
-      args.vaultBump
+      args.vaultBump,
+      args.vecU8,
+      args.vecU16
     )
   }
 
@@ -107,34 +113,36 @@ export class Escrow implements EscrowArgs {
 
   /**
    * Returns the byteSize of a {@link Buffer} holding the serialized data of
-   * {@link Escrow}
+   * {@link Escrow} for the provided args.
+   *
+   * @param args need to be provided since the byte size for this account
+   * depends on them
    */
-  static get byteSize() {
-    return escrowBeet.byteSize
+  static byteSize(args: EscrowArgs) {
+    const instance = Escrow.fromArgs(args)
+    return escrowBeet.toFixedFromValue({
+      accountDiscriminator: escrowDiscriminator,
+      ...instance,
+    }).byteSize
   }
 
   /**
    * Fetches the minimum balance needed to exempt an account holding
    * {@link Escrow} data from rent
    *
+   * @param args need to be provided since the byte size for this account
+   * depends on them
    * @param connection used to retrieve the rent exemption information
    */
   static async getMinimumBalanceForRentExemption(
+    args: EscrowArgs,
     connection: web3.Connection,
     commitment?: web3.Commitment
   ): Promise<number> {
     return connection.getMinimumBalanceForRentExemption(
-      Escrow.byteSize,
+      Escrow.byteSize(args),
       commitment
     )
-  }
-
-  /**
-   * Determines if the provided {@link Buffer} has the correct byte size to
-   * hold {@link Escrow} data.
-   */
-  static hasCorrectByteSize(buf: Buffer, offset = 0) {
-    return buf.byteLength - offset === Escrow.byteSize
   }
 
   /**
@@ -150,6 +158,8 @@ export class Escrow implements EscrowArgs {
       amountB: this.amountB,
       escrowBump: this.escrowBump,
       vaultBump: this.vaultBump,
+      vecU8: this.vecU8,
+      vecU16: this.vecU16,
     }
   }
 }
@@ -158,7 +168,7 @@ export class Escrow implements EscrowArgs {
  * @category Accounts
  * @category generated
  */
-export const escrowBeet = new beet.BeetStruct<
+export const escrowBeet = new beet.FixableBeetStruct<
   Escrow,
   EscrowArgs & {
     accountDiscriminator: number[] /* size: 8 */
@@ -173,6 +183,8 @@ export const escrowBeet = new beet.BeetStruct<
     ['amountB', beet.u64],
     ['escrowBump', beet.u8],
     ['vaultBump', beet.u8],
+    ['vecU8', beet.array(beet.u8)],
+    ['vecU16', beet.array(beet.u16)],
   ],
   Escrow.fromArgs,
   'Escrow'
