@@ -1375,6 +1375,15 @@
     bn.js "^5.2.0"
     debug "^4.3.3"
 
+"@metaplex-foundation/beet@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.yarnpkg.com/@metaplex-foundation/beet/-/beet-0.1.4.tgz#888dfd68fbbb027c045a4b6649bfc85b04610e26"
+  integrity sha512-gUlgl4h9XzSvSx7lUDvYQuy1eMxu4UXbt5MSR9K/dYIHHd3gcCxm8/6vn0VnUXMvpwVHS8tezxlsaKu+TIu6zQ==
+  dependencies:
+    ansicolors "^0.3.2"
+    bn.js "^5.2.0"
+    debug "^4.3.3"
+
 "@metaplex-foundation/cusper@^0.0.2":
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@metaplex-foundation/cusper/-/cusper-0.0.2.tgz#dc2032a452d6c269e25f016aa4dd63600e2af975"
@@ -1428,12 +1437,12 @@
     text-table "^0.2.0"
     toml "^3.0.0"
 
-"@metaplex-foundation/solita@^0.5.3":
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/@metaplex-foundation/solita/-/solita-0.5.3.tgz#e4a86d9166e97965cfd877c9c7f3d55a863c7a24"
-  integrity sha512-6K2QSYnUSDKnd8vvJFmPa/zNi4UBYMGG6EyJcTDfhEcmYLKxm9EXt8VAdHrrsa0A2F7913wqEf3Gl1RtroYPMw==
+"@metaplex-foundation/solita@^0.5.5":
+  version "0.5.5"
+  resolved "https://registry.yarnpkg.com/@metaplex-foundation/solita/-/solita-0.5.5.tgz#e0473b117f930cb8d832a965f15ebeecaf3ef19f"
+  integrity sha512-fSONdHrUpFNxiSJ8pdKVl3vGz+khzxfJTEygOBWiRtV7uPaN019SqsoViz1bw0te1TnAvB/MdaIREhGfFpR4Fg==
   dependencies:
-    "@metaplex-foundation/beet" "^0.1.0"
+    "@metaplex-foundation/beet" "^0.1.4"
     "@metaplex-foundation/beet-solana" "^0.1.1"
     "@metaplex-foundation/rustbin" "^0.3.0"
     "@solana/web3.js" "^1.36.0"
