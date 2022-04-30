@@ -5,12 +5,13 @@
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
     },
     "dependencies": {
-        "@solana/spl-token": "^0.1.8"
+        "@solana/spl-token": "^0.1.8",
+        "@solana/web3.js": "^1.41.3"
     },
     "devDependencies": {
-        "@metaplex-foundation/amman": "^0.5.0",
-        "@project-serum/anchor": "^0.24.2",
+        "@metaplex-foundation/amman": "^0.6.3",
         "@metaplex-foundation/solita": "^0.5.5",
+        "@project-serum/anchor": "^0.24.2",
         "@types/bn.js": "^5.1.0",
         "@types/chai": "^4.3.0",
         "@types/mocha": "^9.0.0",
