@@ -37,6 +37,13 @@ const initializeStruct = new beet.BeetArgsStruct<
 )
 /**
  * Accounts required by the _initialize_ instruction
+ *
+ * @property [_writable_] escrow
+ * @property [_writable_] vault
+ * @property [_writable_, **signer**] authority
+ * @property [_writable_] tokenAccountMaker
+ * @property [] mintTokenMaker
+ * @property [] mintTokenTaker
  * @category Instructions
  * @category Initialize
  * @category generated

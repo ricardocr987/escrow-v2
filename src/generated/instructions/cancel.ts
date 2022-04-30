@@ -22,6 +22,11 @@ const cancelStruct = new beet.BeetArgsStruct<{
 )
 /**
  * Accounts required by the _cancel_ instruction
+ *
+ * @property [_writable_] escrow
+ * @property [_writable_] vault
+ * @property [_writable_, **signer**] authority
+ * @property [_writable_] tokenAccountMaker
  * @category Instructions
  * @category Cancel
  * @category generated
@@ -39,7 +44,6 @@ const cancelInstructionDiscriminator = [232, 219, 223, 41, 219, 236, 220, 190]
  * Creates a _Cancel_ instruction.
  *
  * @param accounts that will be accessed while the instruction is processed
- *
  * @category Instructions
  * @category Cancel
  * @category generated

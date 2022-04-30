@@ -22,6 +22,15 @@ const exchangeStruct = new beet.BeetArgsStruct<{
 )
 /**
  * Accounts required by the _exchange_ instruction
+ *
+ * @property [_writable_] escrow
+ * @property [_writable_] vault
+ * @property [_writable_, **signer**] authority
+ * @property [_writable_] maker
+ * @property [_writable_] tokenAccountMakerB
+ * @property [_writable_] tokenAccountTakerA
+ * @property [_writable_] tokenAccountTakerB
+ * @property [] takerMint
  * @category Instructions
  * @category Exchange
  * @category generated
@@ -43,7 +52,6 @@ const exchangeInstructionDiscriminator = [47, 3, 27, 97, 215, 236, 219, 144]
  * Creates a _Exchange_ instruction.
  *
  * @param accounts that will be accessed while the instruction is processed
- *
  * @category Instructions
  * @category Exchange
  * @category generated

@@ -22,7 +22,7 @@ export type EscrowArgs = {
   amountB: beet.bignum
   escrowBump: number
   vaultBump: number
-  vecU8: number[]
+  vecU8: Uint8Array
   vecU16: number[]
 }
 
@@ -43,7 +43,7 @@ export class Escrow implements EscrowArgs {
     readonly amountB: beet.bignum,
     readonly escrowBump: number,
     readonly vaultBump: number,
-    readonly vecU8: number[],
+    readonly vecU8: Uint8Array,
     readonly vecU16: number[]
   ) {}
 
@@ -154,8 +154,28 @@ export class Escrow implements EscrowArgs {
       authority: this.authority.toBase58(),
       mintTokenMaker: this.mintTokenMaker.toBase58(),
       mintTokenTaker: this.mintTokenTaker.toBase58(),
-      amountA: this.amountA,
-      amountB: this.amountB,
+      amountA: (() => {
+        const x = <{ toNumber: () => number }>this.amountA
+        if (typeof x.toNumber === 'function') {
+          try {
+            return x.toNumber()
+          } catch (_) {
+            return x
+          }
+        }
+        return x
+      })(),
+      amountB: (() => {
+        const x = <{ toNumber: () => number }>this.amountB
+        if (typeof x.toNumber === 'function') {
+          try {
+            return x.toNumber()
+          } catch (_) {
+            return x
+          }
+        }
+        return x
+      })(),
       escrowBump: this.escrowBump,
       vaultBump: this.vaultBump,
       vecU8: this.vecU8,
@@ -183,7 +203,7 @@ export const escrowBeet = new beet.FixableBeetStruct<
     ['amountB', beet.u64],
     ['escrowBump', beet.u8],
     ['vaultBump', beet.u8],
-    ['vecU8', beet.array(beet.u8)],
+    ['vecU8', beet.bytes],
     ['vecU16', beet.array(beet.u16)],
   ],
   Escrow.fromArgs,
