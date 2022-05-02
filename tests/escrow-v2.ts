@@ -153,7 +153,6 @@ describe("escrow-v2", () => {
 
     await initilize(accounts, args, signers);
     
-    await (await program.account.escrow.fetch(escrow)).vecU8;
     // Checks vault PDA Account
     assert.equal(
       100,

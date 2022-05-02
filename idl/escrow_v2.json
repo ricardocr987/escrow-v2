@@ -183,16 +183,6 @@
           {
             "name": "vaultBump",
             "type": "u8"
-          },
-          {
-            "name": "vecU8",
-            "type": "bytes"
-          },
-          {
-            "name": "vecU16",
-            "type": {
-              "vec": "u16"
-            }
           }
         ]
       }
